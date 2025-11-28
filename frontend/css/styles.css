@@ -36,6 +36,7 @@ footer {
   background:transparent;
 }
 
+/* make calendar responsive */
 @media (max-width:700px){
   .container { padding:8px; }
 }
