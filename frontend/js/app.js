@@ -1,16 +1,19 @@
+let sb = null;
 
-let sb = null; 
+async function appInit() {
+  // Use Vercel frontend env vars (prefixed with NEXT_PUBLIC_)
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-async function appInit(){
-   if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined') {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     const el = document.getElementById('status');
-    if (el) el.innerText = 'Supabase not configured yet. Open frontend/js/config.js and add your keys (or set env vars in Vercel).';
+    if (el) el.innerText = 'Supabase not configured yet. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel.';
     throw new Error('Supabase config missing');
   }
-   try {
+
+  try {
     sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   } catch (e) {
-    // fallback if CDN provides different global
     if (window.supabase) {
       sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } else {
