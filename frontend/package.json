@@ -1,0 +1,8 @@
+{
+  "name": "bpd-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node ../scripts/writeConfig.js && mkdir -p ./public && cp -r ./* ./public || true",
+    "vercel-build": "npm run build"
+  }
+}
