@@ -1,16 +1,27 @@
-let supabase = null;
 
-async function appInit() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    document.getElementById && (document.getElementById('status').innerText = 'Supabase not configured. Edit js/config.js and add your keys.');
-    throw new Error('Supabase not configured. Open frontend/js/config.js and set SUPABASE_URL and SUPABASE_ANON_KEY.');
+let sb = null; 
+
+async function appInit(){
+   if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined') {
+    const el = document.getElementById('status');
+    if (el) el.innerText = 'Supabase not configured yet. Open frontend/js/config.js and add your keys (or set env vars in Vercel).';
+    throw new Error('Supabase config missing');
   }
-  supabase = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+   try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (e) {
+    // fallback if CDN provides different global
+    if (window.supabase) {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+      throw e;
+    }
+  }
 
   if (document.getElementById('btn-login')) bindAuthEvents();
 }
 
-function bindAuthEvents() {
+function bindAuthEvents(){
   document.getElementById('show-register').addEventListener('click', (e) => {
     e.preventDefault();
     document.getElementById('login-form').style.display = 'none';
@@ -25,13 +36,10 @@ function bindAuthEvents() {
   document.getElementById('btn-login').addEventListener('click', async () => {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    document.getElementById('status').innerText = 'Signing in...';
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      document.getElementById('status').innerText = 'Error: ' + error.message;
-      return;
-    }
- 
+    setStatus('Signing in...');
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) return setStatus('Error: ' + error.message);
+    setStatus('Signed in.');
     location.href = 'dashboard.html';
   });
 
@@ -39,48 +47,57 @@ function bindAuthEvents() {
     const email = document.getElementById('reg-email').value;
     const password = document.getElementById('reg-password').value;
     const full_name = document.getElementById('reg-name').value;
-    document.getElementById('status').innerText = 'Creating account...';
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name } } });
-    if (error) {
-      document.getElementById('status').innerText = 'Error: ' + error.message;
-      return;
-    }
-    document.getElementById('status').innerText = 'Account created. Check your email for confirmation. You will be redirected to dashboard after sign-in.';
+    setStatus('Creating account...');
+    const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name } } });
+    if (error) return setStatus('Error: ' + error.message);
+    setStatus('Account created. Check your email for confirmation. Then sign in.');
   });
 }
 
-async function isSignedIn() {
-  const session = await supabase.auth.getSession();
-  return !!session?.data?.session;
+function setStatus(text){
+  const el = document.getElementById('status') || document.getElementById('to-status') || document.getElementById('shift-status');
+  if (el) el.innerText = text;
 }
 
-async function getProfile() {
-  const uid = (await supabase.auth.getUser()).data.user?.id;
-  if (!uid) return null;
-  const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
+async function isSignedIn(){
+  const s = await sb.auth.getSession();
+  return !!s?.data?.session;
+}
+
+async function getUser(){
+  const r = await sb.auth.getUser();
+  return r?.data?.user || null;
+}
+
+async function getProfile(){
+  const user = await getUser();
+  if (!user) return null;
+  const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if (error) return null;
   return data;
 }
 
-async function isAdmin() {
+async function isAdmin(){
   const p = await getProfile();
   return p && p.role === 'admin';
 }
 
-async function loadCalendar() {
+async function loadCalendar(){
   const calendarEl = document.getElementById('calendar');
+  if (!calendarEl) return;
   calendarEl.innerHTML = '';
   const { Calendar } = FullCalendar;
   const calendar = new Calendar(calendarEl, {
     initialView: 'timeGridWeek',
     headerToolbar: { left: 'prev,next today', center: 'title', right: 'timeGridDay,timeGridWeek,dayGridMonth' },
-    events: async function(info, successCallback) {
-   
-      const start = info.startStr;
-      const end = info.endStr;
-      const { data, error } = await supabase
+    events: async function(fetchInfo, successCallback) {
+      const start = fetchInfo.startStr;
+      const end = fetchInfo.endStr;
+      const { data, error } = await sb
         .from('schedules')
         .select('id,title,start_ts,end_ts,user_id')
-        .gte('start_ts', start).lte('end_ts', end);
+        .gte('start_ts', start)
+        .lte('end_ts', end);
       if (error) { console.error(error); successCallback([]); return; }
       const events = data.map(s => ({
         id: s.id,
@@ -90,56 +107,57 @@ async function loadCalendar() {
       }));
       successCallback(events);
     },
-    editable: false
+    editable: false,
+    height: 'auto'
   });
   calendar.render();
 }
 
-function bindDashboardEvents() {
-  document.getElementById('btn-logout').addEventListener('click', async () => {
-    await supabase.auth.signOut();
+function bindDashboardEvents(){
+  const logoutBtn = document.getElementById('btn-logout');
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await sb.auth.signOut();
     location.href = 'index.html';
   });
 
-  document.getElementById('btn-request-to').addEventListener('click', async () => {
+  const reqBtn = document.getElementById('btn-request-to');
+  if (reqBtn) reqBtn.addEventListener('click', async () => {
     const start_date = document.getElementById('to-start').value;
     const end_date = document.getElementById('to-end').value;
     const reason = document.getElementById('to-reason').value;
-    document.getElementById('to-status').innerText = 'Submitting...';
-    const user = (await supabase.auth.getUser()).data.user;
+    setStatus('Submitting...');
+    const user = await getUser();
     if (!user) { location.href = 'index.html'; return; }
-   
-    const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single();
-    const { error } = await supabase.from('time_off_requests').insert({
+    const { data: profile } = await sb.from('profiles').select('org_id').eq('id', user.id).single();
+    const { error } = await sb.from('time_off_requests').insert({
       org_id: profile.org_id,
       user_id: user.id,
       start_date,
       end_date,
       reason
     });
-    if (error) {
-      document.getElementById('to-status').innerText = 'Error: ' + error.message;
-    } else {
-      document.getElementById('to-status').innerText = 'Request submitted.';
-    }
+    if (error) setStatus('Error: ' + error.message);
+    else setStatus('Request submitted.');
   });
 }
 
-function bindAdminEvents() {
-  document.getElementById('btn-logout-admin').addEventListener('click', async () => {
-    await supabase.auth.signOut();
+function bindAdminEvents(){
+  const logoutBtn = document.getElementById('btn-logout-admin');
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    await sb.auth.signOut();
     location.href = 'index.html';
   });
 
-  document.getElementById('btn-create-shift').addEventListener('click', async () => {
+  const createBtn = document.getElementById('btn-create-shift');
+  if (createBtn) createBtn.addEventListener('click', async () => {
     const title = document.getElementById('shift-title').value;
     const start_ts = document.getElementById('shift-start').value;
     const end_ts = document.getElementById('shift-end').value;
     const user_id = document.getElementById('shift-user').value || null;
-    document.getElementById('shift-status').innerText = 'Creating...';
-    const user = (await supabase.auth.getUser()).data.user;
-    const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single();
-    const { error } = await supabase.from('schedules').insert({
+    setStatus('Creating...');
+    const user = await getUser();
+    const { data: profile } = await sb.from('profiles').select('org_id').eq('id', user.id).single();
+    const { error } = await sb.from('schedules').insert({
       org_id: profile.org_id,
       user_id,
       title,
@@ -147,22 +165,22 @@ function bindAdminEvents() {
       end_ts,
       created_by: user.id
     });
-    if (error) {
-      document.getElementById('shift-status').innerText = 'Error: ' + error.message;
-    } else {
-      document.getElementById('shift-status').innerText = 'Created.';
+    if (error) setStatus('Error: ' + error.message);
+    else {
+      setStatus('Created.');
       await loadAdminData();
     }
   });
-
-  
 }
 
-async function loadAdminData() {
-  const user = (await supabase.auth.getUser()).data.user;
-  const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single();
+async function loadAdminData(){
+  const user = await getUser();
+  if (!user) return;
+  const { data: profile } = await sb.from('profiles').select('org_id').eq('id', user.id).single();
   const org_id = profile.org_id;
-  const { data: to } = await supabase.from('time_off_requests').select('*').eq('org_id', org_id).order('created_at', { ascending: false });
+
+  // time off
+  const { data: to } = await sb.from('time_off_requests').select('*').eq('org_id', org_id).order('created_at', { ascending: false });
   const toList = document.getElementById('timeoff-list');
   toList.innerHTML = '';
   to.forEach(r => {
@@ -173,16 +191,29 @@ async function loadAdminData() {
   });
   toList.querySelectorAll('.approve').forEach(btn => btn.addEventListener('click', async (e) => {
     const id = e.target.dataset.id;
-    await supabase.from('time_off_requests').update({ status: 'approved' }).eq('id', id);
+    await sb.from('time_off_requests').update({ status: 'approved' }).eq('id', id);
     await loadAdminData();
   }));
   toList.querySelectorAll('.deny').forEach(btn => btn.addEventListener('click', async (e) => {
     const id = e.target.dataset.id;
-    await supabase.from('time_off_requests').update({ status: 'denied' }).eq('id', id);
+    await sb.from('time_off_requests').update({ status: 'denied' }).eq('id', id);
     await loadAdminData();
   }));
 
-  const { data: users } = await supabase.from('profiles').select('*').eq('org_id', org_id);
+  const { data: users } = await sb.from('profiles').select('*').eq('org_id', org_id);
   const usersEl = document.getElementById('org-users');
   usersEl.innerHTML = users.map(u => `<div>${u.id} ${u.email || ''} - ${u.full_name || ''} (${u.role})</div>`).join('');
+  const assignSelect = document.getElementById('shift-user');
+  if (assignSelect) {
+    assignSelect.innerHTML = '<option value="">— open shift —</option>';
+    users.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id;
+      opt.text = `${u.full_name || u.email || u.id} (${u.role})`;
+      assignSelect.appendChild(opt);
+    });
+  }
 }
+
+window.addEventListener('load', () => {
+  });
