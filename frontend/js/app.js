@@ -2,12 +2,12 @@
 let supabase = null;
 
 async function appInit() {
-  if (!https://regighceakyjsscojxku.supabase.co || !eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlZ2lnaGNlYWt5anNzY29qeGt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNDEwNDksImV4cCI6MjA3OTkxNzA0OX0.xUNwNTdSF3xHf8FOAbTmhenAErN9Y2wBGJJEr-ilu9A) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     document.getElementById && (document.getElementById('status').innerText = 'Supabase not configured. Edit js/config.js and add your keys.');
     throw new Error('Supabase not configured. Open frontend/js/config.js and set SUPABASE_URL and SUPABASE_ANON_KEY.');
   }
   supabaseLib = supabase; // global alias for older browsers
-supabase = supabase.createClient(https://regighceakyjsscojxku.supabase.co, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlZ2lnaGNlYWt5anNzY29qeGt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNDEwNDksImV4cCI6MjA3OTkxNzA0OX0.xUNwNTdSF3xHf8FOAbTmhenAErN9Y2wBGJJEr-ilu9A);
+supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // bind login/register events if present
   if (document.getElementById('btn-login')) bindAuthEvents();
