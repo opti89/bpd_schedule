@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>dashboard — BPD Schedule</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>my schedule</h1>
+    <button id="btn-logout">log out</button>
+  </header>
+
+  <main class="container">
+    <section>
+      <div id="calendar"></div>
+    </section>
+
+    <section>
+      <h2>request time off</h2>
+      <label>start <input id="to-start" type="date" /></label>
+      <label>end <input id="to-end" type="date" /></label>
+      <label>reason <input id="to-reason" /></label>
+      <button id="btn-request-to">request</button>
+      <div id="to-status"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // dashboard page initializer
+    document.addEventListener('DOMContentLoaded', async () => {
+      await appInit(); // from app.js
+      if (!await isSignedIn()) {
+        location.href = 'index.html';
+        return;
+      }
+      await loadCalendar();
+      bindDashboardEvents();
+    });
+  </script>
+</body>
+</html>
