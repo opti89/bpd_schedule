@@ -1,17 +1,14 @@
 // frontend/js/app.js
-import { supabase } from './config.js'; // import the initialized Supabase client
-
-// global alias for older browsers
-window.supabaseLib = supabase;
+let supabaseInstance = supabase; // alias if needed
 
 async function appInit() {
-  if (!supabase) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     document.getElementById && (document.getElementById('status').innerText =
       'Supabase not configured. Edit js/config.js and add your keys.');
-    throw new Error(
-      'Supabase not configured. Open frontend/js/config.js and set SUPABASE_URL and SUPABASE_ANON_KEY.'
-    );
+    throw new Error('Supabase not configured. Open frontend/js/config.js and set SUPABASE_URL and SUPABASE_ANON_KEY.');
   }
+  
+  supabaseInstance = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // bind login/register events if present
   if (document.getElementById('btn-login')) bindAuthEvents();
