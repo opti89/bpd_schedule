@@ -1,4 +1,3 @@
-// scripts/writeConfig.js
 const fs = require('fs');
 const path = require('path');
 
@@ -14,8 +13,8 @@ const outDir = path.join(__dirname, '..', 'frontend', 'js');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 const content = `// GENERATED CONFIG - DO NOT COMMIT
-const SUPABASE_URL = "${https://regighceakyjsscojxku.supabase.co}";
-const SUPABASE_ANON_KEY = "${eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlZ2lnaGNlYWt5anNzY29qeGt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzNDEwNDksImV4cCI6MjA3OTkxNzA0OX0.xUNwNTdSF3xHf8FOAbTmhenAErN9Y2wBGJJEr-ilu9A}";
+const SUPABASE_URL = "${SUPABASE_URL}";
+const SUPABASE_ANON_KEY = "${SUPABASE_ANON_KEY}";
 `;
 
 fs.writeFileSync(path.join(outDir, 'config.js'), content, { encoding: 'utf8' });
