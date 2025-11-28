@@ -1,9 +1,6 @@
-// api/exportPayroll.js
-const fetch = require('node-fetch'); // available on vercel/node
-const { URLSearchParams } = require('url');
+const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-  // Very simple auth: require ADMIN_SECRET header matching env var (server-only)
   const adminSecret = process.env.ADMIN_SECRET;
   if (!adminSecret) {
     return res.status(500).json({ error: 'Server not configured: ADMIN_SECRET missing' });
@@ -25,13 +22,10 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Query schedules via PostgREST (Supabase REST). We use service_role for full access.
     const params = new URLSearchParams({
-      select: 'id,title,start_ts,end_ts,user_id',
-      'start_ts': `gte.${start}`,
-      'end_ts': `lte.${end}`
+      select: 'id,title,start_ts,end_ts,user_id'
     });
-    const url = `${SUPABASE_URL}/rest/v1/schedules?org_id=eq.${org_id}&${params.toString()}`;
+    const url = `${SUPABASE_URL}/rest/v1/schedules?org_id=eq.${org_id}&start_ts=gte.${start}&end_ts=lte.${end}&${params.toString()}`;
 
     const r = await fetch(url, {
       method: 'GET',
@@ -43,7 +37,6 @@ module.exports = async (req, res) => {
     });
     const data = await r.json();
 
-    // Build CSV
     const csvRows = [['id','title','start_ts','end_ts','user_id']];
     data.forEach(s => csvRows.push([s.id, (s.title||''), s.start_ts, s.end_ts, s.user_id || '']));
     const csv = csvRows.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
