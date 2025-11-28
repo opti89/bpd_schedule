@@ -1,25 +1,12 @@
 let sb = null;
 
 async function appInit() {
-  // Use Vercel frontend env vars (prefixed with NEXT_PUBLIC_)
-  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
     const el = document.getElementById('status');
-    if (el) el.innerText = 'Supabase not configured yet. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel.';
+    if (el) el.innerText = 'Supabase not configured yet. Check environment variables in Vercel.';
     throw new Error('Supabase config missing');
   }
-
-  try {
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  } catch (e) {
-    if (window.supabase) {
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } else {
-      throw e;
-    }
-  }
+  sb = supabase.createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
   if (document.getElementById('btn-login')) bindAuthEvents();
 }
