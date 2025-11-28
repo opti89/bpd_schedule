@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>BPD Schedule — Login</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>BTWP Schedule</h1>
+    <div id="auth-area">
+      <div id="login-form">
+        <h2>Sign In</h2>
+        <input id="email" placeholder="e-mail" />
+        <input id="password" type="password" placeholder="password" />
+        <button id="btn-login">sign in</button>
+        <p>or <a href="#" id="show-register">create an account</a></p>
+      </div>
+
+      <div id="register-form" style="display:none">
+        <h2>create account</h2>
+        <input id="reg-email" placeholder="e-mail" />
+        <input id="reg-password" type="password" placeholder="password" />
+        <input id="reg-name" placeholder="Full name" />
+        <button id="btn-register">create account</button>
+        <p><a href="#" id="show-login">back to sign in</a></p>
+      </div>
+    </div>
+
+    <div id="status"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+
+  <footer>
+    created by OPTi89 technologies → a division of john's auto repair (pro bono department)
+  </footer>
+</body>
+</html>
