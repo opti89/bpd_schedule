@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>admin panel</h1>
-    <button id="btn-logout-admin">Log out</button>
+    <div><button id="btn-logout-admin">log out</button></div>
   </header>
 
   <main class="container">
@@ -18,7 +18,7 @@
       <label>title <input id="shift-title" /></label>
       <label>start <input id="shift-start" type="datetime-local" /></label>
       <label>end <input id="shift-end" type="datetime-local" /></label>
-      <label>assign to (user id) <input id="shift-user" placeholder="leave blank for open shift" /></label>
+      <label>assign to <select id="shift-user"><option value="">— open shift —</option></select></label>
       <button id="btn-create-shift">create shift</button>
       <div id="shift-status"></div>
     </section>
@@ -29,7 +29,7 @@
     </section>
 
     <section>
-      <h2>org users</h2>
+      <h2>rrg users</h2>
       <div id="org-users"></div>
     </section>
   </main>
@@ -53,6 +53,7 @@
       await loadAdminData();
     });
   </script>
+
   <footer>
     created by OPTi89 technologies → a division of john's auto repair (pro bono department)
   </footer>
